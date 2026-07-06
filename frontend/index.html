@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Flipkart Clone</title>
+    <style>
+      body {
+        margin: 0;
+        font-family: Roboto, Arial, sans-serif;
+        background: #f1f3f6;
+        color: #212121;
+      }
+
+      header {
+        background: #2874f0;
+        color: #ffffff;
+        padding: 12px 24px;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+      }
+
+      .logo h1 {
+        margin: 0;
+        font-size: 22px;
+        font-style: italic;
+      }
+
+      .search-container {
+        flex: 1;
+        max-width: 600px;
+        display: flex;
+      }
+
+      .search-container input {
+        width: 100%;
+        padding: 10px 16px;
+        border: 0;
+        border-radius: 2px 0 0 2px;
+        outline: none;
+        font-size: 14px;
+      }
+
+      .search-container button {
+        background: #ffe500;
+        border: 0;
+        padding: 10px 20px;
+        color: #2874f0;
+        font-weight: bold;
+        cursor: pointer;
+        border-radius: 0 2px 2px 0;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 24px auto;
+        padding: 0 16px;
+        display: grid;
+        grid-template-columns: 3fr 1fr;
+        gap: 24px;
+      }
+
+      .catalog, .cart {
+        background: #ffffff;
+        padding: 24px;
+        border-radius: 4px;
+        box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.08);
+      }
+
+      h2 {
+        margin-top: 0;
+        border-bottom: 1px solid #e0e0e0;
+        padding-bottom: 12px;
+      }
+
+      .product-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 16px;
+        margin-top: 16px;
+      }
+
+      .product-card {
+        border: 1px solid #f0f0f0;
+        padding: 16px;
+        border-radius: 4px;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+
+      .product-card h3 {
+        font-size: 16px;
+        margin: 8px 0;
+      }
+
+      .price {
+        font-size: 18px;
+        font-weight: bold;
+        color: #388e3c;
+        margin: 8px 0;
+      }
+
+      .category-tag {
+        font-size: 12px;
+        color: #878787;
+        margin-bottom: 8px;
+      }
+
+      .product-card button {
+        background: #ff9f00;
+        color: #ffffff;
+        border: 0;
+        padding: 8px 12px;
+        border-radius: 2px;
+        font-weight: bold;
+        cursor: pointer;
+        outline: none;
+      }
+
+      .cart-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px 0;
+        border-bottom: 1px solid #f0f0f0;
+        font-size: 14px;
+      }
+
+      .cart-summary {
+        margin-top: 16px;
+        text-align: right;
+      }
+
+      .checkout-btn {
+        background: #fb641b;
+        color: #ffffff;
+        width: 100%;
+        border: 0;
+        padding: 12px;
+        border-radius: 2px;
+        font-weight: bold;
+        cursor: pointer;
+        margin-top: 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="logo">
+        <h1>Flipkart</h1>
+      </div>
+      <div class="search-container">
+        <input id="searchInput" type="text" placeholder="Search for products, brands and more" />
+        <button onclick="searchProducts()">Search</button>
+      </div>
+    </header>
+
+    <div class="container">
+      <div class="catalog">
+        <h2>Our Products</h2>
+        <div id="productList" class="product-list">
+          <!-- Products will render here -->
+        </div>
+      </div>
+
+      <div class="cart">
+        <h2>My Cart (<span id="cartCount">0</span>)</h2>
+        <div id="cartItems">
+          <!-- Cart items render here -->
+        </div>
+        <div class="cart-summary">
+          <strong>Total: ₹<span id="cartTotal">0</span></strong>
+          <button class="checkout-btn" onclick="checkout()">PLACE ORDER</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const api = "http://127.0.0.1:8030";
+
+      async function searchProducts() {
+        const query = document.getElementById("searchInput").value;
+        const res = await fetch(`${api}/products?q=${encodeURIComponent(query)}`);
+        const products = await res.json();
+        renderProducts(products);
+      }
+
+      function renderProducts(products) {
+        const list = document.getElementById("productList");
+        list.innerHTML = "";
+        products.forEach(p => {
+          list.innerHTML += `
+            <div class="product-card">
+              <div>
+                <span class="category-tag">${p.category}</span>
+                <h3>${p.name}</h3>
+              </div>
+              <div>
+                <div class="price">₹${p.price.toLocaleString()}</div>
+                <button onclick="addToCart('${p.id}', '${p.name}', ${p.price})">ADD TO CART</button>
+              </div>
+            </div>
+          `;
+        });
+      }
+
+      async function loadCart() {
+        const res = await fetch(`${api}/cart`);
+        const cart = await res.json();
+        const itemsDiv = document.getElementById("cartItems");
+        itemsDiv.innerHTML = "";
+        
+        let total = 0;
+        let count = 0;
+
+        cart.forEach(item => {
+          const price = parseFloat(item.price);
+          const quantity = parseInt(item.quantity);
+          total += price * quantity;
+          count += quantity;
+
+          itemsDiv.innerHTML += `
+            <div class="cart-item">
+              <div>
+                <strong>${item.name}</strong>
+                <div>Qty: ${quantity}</div>
+              </div>
+              <div>₹${(price * quantity).toLocaleString()}</div>
+            </div>
+          `;
+        });
+
+        document.getElementById("cartCount").textContent = count;
+        document.getElementById("cartTotal").textContent = total.toLocaleString();
+      }
+
+      async function addToCart(id, name, price) {
+        await fetch(`${api}/cart`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ product_id: id, name, price, quantity: 1 }),
+        });
+        loadCart();
+      }
+
+      async function checkout() {
+        const res = await fetch(`${api}/checkout`, { method: "POST" });
+        const result = await res.json();
+        alert(`${result.message}\nTotal Amount Paid: ₹${result.total_amount.toLocaleString()}`);
+        loadCart();
+      }
+
+      // Initial Load
+      searchProducts();
+      loadCart();
+    </script>
+  </body>
+</html>
