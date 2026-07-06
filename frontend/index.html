@@ -55,6 +55,46 @@
         border-radius: 0 2px 2px 0;
       }
 
+      .promo-banner {
+        background: linear-gradient(135deg, #172554, #1e3a8a, #2563eb);
+        color: #ffffff;
+        padding: 24px;
+        border-radius: 4px;
+        margin: 24px auto 0;
+        max-width: 1168px;
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-sizing: border-box;
+      }
+
+      .promo-content h2 {
+        margin: 0 0 6px 0 !important;
+        font-size: 24px !important;
+        font-weight: 800;
+        color: #ffffff;
+        border: 0 !important;
+        padding: 0 !important;
+      }
+
+      .promo-content p {
+        margin: 0;
+        font-size: 15px;
+        color: #93c5fd;
+      }
+
+      .promo-badge {
+        background: #ffe500;
+        color: #1e3a8a;
+        padding: 8px 16px;
+        font-weight: 800;
+        border-radius: 4px;
+        font-size: 16px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
       .container {
         max-width: 1200px;
         margin: 24px auto;
@@ -147,10 +187,108 @@
         cursor: pointer;
         margin-top: 16px;
       }
+      /* Sidebar Style */
+      .sidebar {
+        position: fixed;
+        top: 0;
+        left: -280px;
+        width: 280px;
+        height: 100%;
+        background: #ffffff;
+        box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
+        z-index: 1000;
+        transition: left 0.3s ease;
+        padding: 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        box-sizing: border-box;
+      }
+
+      .sidebar.active {
+        left: 0;
+      }
+
+      .sidebar-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #e0e0e0;
+        padding-bottom: 12px;
+      }
+
+      .sidebar-header h2 {
+        margin: 0;
+        font-size: 18px;
+        color: #2874f0;
+      }
+
+      .close-sidebar-btn {
+        background: transparent;
+        border: 0;
+        font-size: 24px;
+        cursor: pointer;
+        color: #878787;
+      }
+
+      .sidebar-menu {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .sidebar-menu li a {
+        text-decoration: none;
+        color: #212121;
+        font-size: 16px;
+        font-weight: 500;
+        display: block;
+        padding: 8px 12px;
+        border-radius: 4px;
+        transition: background 0.2s;
+      }
+
+      .sidebar-menu li a:hover {
+        background: #f1f3f6;
+        color: #2874f0;
+      }
+
+      /* Hamburger Toggle button in header */
+      .hamburger-btn {
+        background: transparent;
+        border: 0;
+        color: #ffffff;
+        font-size: 24px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 4px;
+      }
+
+      /* Overlay */
+      .sidebar-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.4);
+        z-index: 999;
+        display: none;
+      }
+
+      .sidebar-overlay.active {
+        display: block;
+      }
     </style>
   </head>
   <body>
     <header>
+      <button class="hamburger-btn" onclick="toggleSidebar()">&#9776;</button>
       <div class="logo">
         <h1>Flipkart</h1>
       </div>
@@ -159,6 +297,16 @@
         <button onclick="searchProducts()">Search</button>
       </div>
     </header>
+
+    <div class="promo-banner">
+      <div class="promo-content">
+        <h2>Big Billion Days are coming!</h2>
+        <p>Get up to 50% off on all Electronics, Accessories, and Fashion items.</p>
+      </div>
+      <div class="promo-badge">
+        50% OFF
+      </div>
+    </div>
 
     <div class="container">
       <div class="catalog">
@@ -255,9 +403,51 @@
         loadCart();
       }
 
+      function toggleSidebar() {
+        const sidebar = document.getElementById("sidebar");
+        const overlay = document.getElementById("sidebarOverlay");
+        sidebar.classList.toggle("active");
+        overlay.classList.toggle("active");
+      }
+
+      async function loadCategories() {
+        try {
+          const res = await fetch(`${api}/api/navigation/categories`);
+          const categories = await res.json();
+          const menu = document.getElementById("categoryMenu");
+          menu.innerHTML = "";
+          categories.forEach(cat => {
+            menu.innerHTML += `
+              <li><a href="#" onclick="filterByCategory('${cat.name}')">${cat.name}</a></li>
+            `;
+          });
+        } catch (err) {
+          console.error("Failed to load categories:", err);
+        }
+      }
+
+      function filterByCategory(categoryName) {
+        document.getElementById("searchInput").value = categoryName;
+        searchProducts();
+        toggleSidebar();
+      }
+
       // Initial Load
       searchProducts();
       loadCart();
+      loadCategories();
     </script>
+
+    <!-- Sidebar Drawer -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+    <div class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <h2>Departments</h2>
+        <button class="close-sidebar-btn" onclick="toggleSidebar()">&times;</button>
+      </div>
+      <ul class="sidebar-menu" id="categoryMenu">
+        <!-- Categories will load here -->
+      </ul>
+    </div>
   </body>
 </html>
