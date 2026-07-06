@@ -49,6 +49,22 @@ def write_cart(rows: list[dict]):
         writer.writeheader()
         writer.writerows(rows)
 
+CATEGORIES_FILE = os.path.join(os.path.dirname(__file__), "..", "postgres", "categories.csv")
+
+def init_categories_db():
+    if not os.path.exists(CATEGORIES_FILE):
+        os.makedirs(os.path.dirname(CATEGORIES_FILE), exist_ok=True)
+        with open(CATEGORIES_FILE, "w", newline="", encoding="utf-8") as file:
+            writer = csv.writer(file)
+            writer.writerow(["id", "name"])
+            writer.writerows([["c1", "Electronics"], ["c2", "Accessories"], ["c3", "Fashion"], ["c4", "Home"]])
+
+@app.get("/api/navigation/categories")
+def get_categories():
+    init_categories_db()
+    with open(CATEGORIES_FILE, "r", encoding="utf-8") as file:
+        return list(csv.DictReader(file))
+
 @app.get("/products")
 def get_products(q: str = ""):
     if not q:
