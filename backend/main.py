@@ -16,6 +16,7 @@ app.add_middleware(
 )
 
 CART_FILE = os.path.join(os.path.dirname(__file__), "..", "postgres", "cart.csv")
+ORDERS_FILE = os.path.join(os.path.dirname(__file__), "..", "postgres", "orders.csv")
 
 PRODUCTS = [
     {"id": "p1", "name": "Apple iPhone 15 Pro", "price": 120000, "category": "Electronics"},
@@ -48,6 +49,14 @@ def write_cart(rows: list[dict]):
         writer = csv.DictWriter(file, fieldnames=["id", "product_id", "name", "price", "quantity", "created_at"])
         writer.writeheader()
         writer.writerows(rows)
+
+def init_orders_db():
+    if not os.path.exists(ORDERS_FILE):
+        os.makedirs(os.path.dirname(ORDERS_FILE), exist_ok=True)
+        with open(ORDERS_FILE, "w", newline="", encoding="utf-8") as file:
+            writer = csv.writer(file)
+            writer.writerow(["order_id", "total_amount", "created_at"])
+
 
 CATEGORIES_FILE = os.path.join(os.path.dirname(__file__), "..", "postgres", "categories.csv")
 
@@ -103,5 +112,44 @@ def checkout():
         raise HTTPException(status_code=400, detail="Shopping cart is empty.")
     
     total = sum(float(row["price"]) * int(row["quantity"]) for row in cart)
+    
+    init_orders_db()
+    order_id = f"ord-{os.urandom(4).hex()}"
+    with open(ORDERS_FILE, "a", newline="", encoding="utf-8") as file:
+        writer = csv.writer(file)
+        writer.writerow([order_id, total, datetime.now(timezone.utc).isoformat()])
+        
     write_cart([])  # Empty the cart
-    return {"message": "Checkout completed successfully!", "total_amount": total, "order_status": "placed"}
+    return {"message": "Checkout completed successfully!", "order_id": order_id, "total_amount": total, "order_status": "placed"}
+
+from fastapi.responses import PlainTextResponse
+
+@app.get("/invoice/{order_id}", response_class=PlainTextResponse)
+def get_invoice(order_id: str):
+    init_orders_db()
+    with open(ORDERS_FILE, "r", encoding="utf-8") as file:
+        reader = csv.DictReader(file)
+        order = next((row for row in reader if row["order_id"] == order_id), None)
+        
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+        
+    invoice_text = (
+        "====================================\n"
+        "          FLIPKART CLONE\n"
+        "====================================\n"
+        "             INVOICE\n"
+        "------------------------------------\n"
+        f"Order ID: {order['order_id']}\n"
+        f"Date:     {order['created_at']}\n"
+        "------------------------------------\n"
+        f"Total Amount Paid: ${order['total_amount']}\n"
+        "====================================\n"
+        "   Thank you for shopping with us!\n"
+        "====================================\n"
+    )
+    
+    return PlainTextResponse(
+        content=invoice_text,
+        headers={"Content-Disposition": f"attachment; filename=invoice_{order_id}.txt"}
+    )
