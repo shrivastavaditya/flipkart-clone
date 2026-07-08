@@ -401,6 +401,29 @@
         const result = await res.json();
         alert(`${result.message}\nTotal Amount Paid: ₹${result.total_amount.toLocaleString()}`);
         loadCart();
+        
+        if (result.order_id) {
+          const cartSummary = document.querySelector(".cart-summary");
+          let invoiceBtn = document.getElementById("invoiceBtn");
+          if (!invoiceBtn) {
+            invoiceBtn = document.createElement("button");
+            invoiceBtn.id = "invoiceBtn";
+            invoiceBtn.style.marginTop = "10px";
+            invoiceBtn.style.background = "#2874f0";
+            invoiceBtn.style.color = "#fff";
+            invoiceBtn.style.border = "none";
+            invoiceBtn.style.padding = "12px";
+            invoiceBtn.style.borderRadius = "2px";
+            invoiceBtn.style.fontWeight = "bold";
+            invoiceBtn.style.width = "100%";
+            invoiceBtn.style.cursor = "pointer";
+            cartSummary.appendChild(invoiceBtn);
+          }
+          invoiceBtn.textContent = "DOWNLOAD INVOICE";
+          invoiceBtn.onclick = () => {
+             window.open(`${api}/invoice/${result.order_id}`, '_blank');
+          };
+        }
       }
 
       function toggleSidebar() {
