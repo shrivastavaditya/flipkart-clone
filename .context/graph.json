@@ -1,0 +1,72 @@
+{
+  "project": "flipkart-clone",
+  "version": "1.0",
+  "nodes": [
+    {
+      "id": "backend_api",
+      "type": "component",
+      "label": "Core FastAPI Server",
+      "file": "backend/main.py",
+      "description": "Main application entry point exposing product catalog, cart, checkout, and invoice APIs."
+    },
+    {
+      "id": "frontend_ui",
+      "type": "component",
+      "label": "Vanilla HTML Frontend",
+      "file": "frontend/index.html",
+      "description": "User interface containing product search, cart summary, checkout logic, and invoice download button."
+    },
+    {
+      "id": "cart_db",
+      "type": "database",
+      "label": "Cart CSV Store",
+      "file": "postgres/cart.csv",
+      "description": "Mock persistence for active shopping cart sessions."
+    },
+    {
+      "id": "orders_db",
+      "type": "database",
+      "label": "Orders CSV Store",
+      "file": "postgres/orders.csv",
+      "description": "Mock persistence for completed orders used to generate invoices."
+    },
+    {
+      "id": "feature_invoice",
+      "type": "feature",
+      "label": "Invoice Generation",
+      "description": "Generates a plain-text invoice for downloaded orders."
+    }
+  ],
+  "edges": [
+    {
+      "source": "backend_api",
+      "target": "cart_db",
+      "relation": "READS_WRITES"
+    },
+    {
+      "source": "backend_api",
+      "target": "orders_db",
+      "relation": "READS_WRITES"
+    },
+    {
+      "source": "frontend_ui",
+      "target": "backend_api",
+      "relation": "CALLS_API"
+    },
+    {
+      "source": "feature_invoice",
+      "target": "backend_api",
+      "relation": "IMPLEMENTED_IN"
+    },
+    {
+      "source": "feature_invoice",
+      "target": "frontend_ui",
+      "relation": "IMPLEMENTED_IN"
+    },
+    {
+      "source": "feature_invoice",
+      "target": "orders_db",
+      "relation": "DEPENDS_ON"
+    }
+  ]
+}
